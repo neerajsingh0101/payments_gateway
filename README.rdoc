@@ -1,0 +1,161 @@
+= PaymentsGateway
+
+The <b>PaymentsGateway</b> library is a Ruby wrapper for the PaymentsGateway.com API.  
+
+
+== Words of Warning
+This project is still in the development stage and has not been thoroughly tested, and code may not
+be optimized.  However, it works for me.  
+
+I do NOT guarantee going forward this will not change - meaning methods may go away, classes may get consolidated, etc.
+
+
+
+== Installing
+
+If you are using Rails then put the contents of the payments_gateway/lib directory into your [rails_app]/lib directory.
+
+If you are NOT using Rails, or you are using something else, then make sure to: require 'payments_gateway'.
+
+
+
+== Read this or you may hate yourself!
+
+To keep things as simple as possible the method names are based on the PaymentsGateway documentation.  I take
+the method names from the SOAP object and convert them to the common Ruby naming convention.  
+
+For example something like
+  FirstName
+is 
+  first_name
+
+
+To be even more specific look at the Client object here
+
+  http://www.paymentsgateway.com/developerDocumentation/Integration/webservices/Objects.aspx
+  
+and you will see everything is camelcase.  All of those are converted to the common Ruby naming convention.
+
+  FirstName --> first_name
+  LastName --> last_name
+  CompanyName --> company_name
+  
+
+Now you can read the documentation without worrying how to match stuff up with this library.
+
+
+
+== Usage
+  
+You will need 4 pieces of information: 
+1) Your merchant ID
+2) Your gateway API Key
+3) Your gateway API Password (security key)
+4) Your transactions password (this is in an email from PaymentsGateway.com)
+
+
+Initialize account object
+  account = PaymentsGateway::MerchantAccount.new(PAYMENTS_GATEWAY_MERCHANT_ID, 
+                                                 PAYMENTS_GATEWAY_API_KEY, 
+                                                 PAYMENTS_GATEWAY_SECURITY_KEY, 
+                                                 PAYMENTS_GATEWAY_TRANSACTION_PASSWORD,
+                                                 false)  # Run in Production mode
+
+
+
+Add Client
+
+  client = PaymentsGateway::Client.new
+  client.first_name = 'Anna'
+  client.last_name = 'Banana'
+  
+  # Save this client ID
+  client_id = account.create_client(client)
+                                                   
+
+Update Client
+
+  # The ID assigned by PaymentsGateway - you can see this on the web interface.
+  client_id = '1234'
+  
+  client = account.get_client(client_id)
+  
+  client.last_name = 'Pear'
+  
+  account.update_client(client)
+  
+Delete Client
+
+  # The ID assigned by PaymentsGateway - you can see this on the web interface.
+  client_id = '1234'
+  
+  account.delete_client(client_id)  
+  
+
+Add Bank Account
+
+  bank_account = PaymentsGateway::BankAccount.new
+
+  # The ID assigned by PaymentsGateway - you can see this on the web interface.
+  bank_account.client_id = '1234' 
+
+  bank_account.acct_holder_name = 'Anna Banana'
+  bank_account.ec_account_number = '123456789'
+  bank_account.ec_account_trn = '122400724'
+  bank_account.ec_account_type = PaymentsGateway::BankAccount::CHECKING
+  bank_account.note = 'Bank of America'
+  bank_account.is_default = PaymentsGateway::BankAccount::YES
+  
+  # Save this ID somewhere as I have not found a way to recover it, 
+  # or find it through the web interface.
+  payment_method_id = account.create_bank_account(bank_account)
+  
+  
+
+Credit Bank Account
+  
+  # The ID assigned by PaymentsGateway - you can see this on the web interface.
+  client_id = '1234'
+  
+  # Payment method ID returned from PaymentsGateway when you created the account.
+  # If you didn't save it that sucks as I have not found a way to recover it, 
+  # or find it through the web interface.
+  payment_method_id = '123456789'
+  
+  bank_account = account.get_bank_account(client_id, payment_method_id)
+  
+  # Status is a PaymentsGateway::TransactionResponse object
+  status = account.credit_bank_account(bank_account, '43.67')
+  
+  
+
+Debit Bank Account
+
+  # The ID assigned by PaymentsGateway - you can see this on the web interface.
+  client_id = '1234'
+
+  # Payment method ID returned from PaymentsGateway when you created the account.
+  # If you didn't save it that sucks as I have not found a way to recover it, 
+  # or find it through the web interface.
+  payment_method_id = '123456789'
+
+  bank_account = account.get_bank_account(client_id, payment_method_id)
+
+  # Status is a PaymentsGateway::TransactionResponse object
+  status = account.debit_bank_account(bank_account, '12.29')
+
+
+
+
+== Additional resources
+
+* Documentation: http://www.paymentsgateway.com/developerDocumentation/Integration/webservices.aspx
+
+
+== License
+
+This plugin is released under the MIT license. 
+
+If you want to help out please fork the project.
+
+Please contact weshays (http://github.com/weshays) for any questions.
